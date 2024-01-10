@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Horloge</title>
+    <meta name="description" content="EVM-made SVG animations">
+    <style>
+        body, * {
+            font-family: sans-serif;
+            margin:0;
+            color: white;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+      main {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #111111;
+        flex-direction: column;
+      }
+      .container {
+        top: 0;
+        left: 0;
+      };
+        nav {
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
+        max-height:90vh;
+      }
+      @media (max-width: 1200px) {
+        nav {
+            flex-direction: row;
+        }
+    }
+      nav a {
+        padding: 0.15rem;
+        margin-right: 1rem;
+        white-space: nowrap;
+      } 
+      h1 {
+        margin-top: 0.75rem;
+      }
+      img {
+        width: 89vw;
+        height: 89vh;
+      }
+      #openseaContainer {
+        bottom: 0;
+        left: 0;
+      }
+      .container,
+      #openseaContainer,
+      #artworkTitle ,
+      #artworkDescription {
+        position: absolute;
+        margin: 0.5rem;
+      }
+      #artworkTitle {
+        top: 0;
+        right: 0;
+        font-style: italic;
+        font-weight: bold;
+    }
+    @media (max-width: 840px) {
+        #artworkTitle {
+            bottom: 1.5rem;
+            top: auto; 
+        }
+        h1 {
+            transform: rotate(180deg);
+        }
+    }
+    #artworkDescription {
+        bottom: 0;
+        right: 0;
+    }
+
+    a {
+    color: #FEFEFE;
+    text-decoration: none;
+    }
+    a {
+    color: #FEFEFE;
+    text-decoration: none;
+    padding:0.25rem;
+    border-radius: 0.25rem;
+    }
+    a:hover {
+    background-color: #FEFEFE;
+    color:#111111;
+    }
+    </style>
+    <script>
+      window.onload = function () {
+
+                var myImage = document.getElementById('artworkImage');
+                if (myImage) {
+                    myImage.addEventListener('click', toggleVisibility);
+                }
+
+
+        // Function to get the artwork number from URL
+        function getArtworkNumber() {
+            const path = window.location.pathname;
+
+            // Remove trailing slash if it exists
+            const trimmedPath = path.endsWith('/') ? path.slice(0, -1) : path;
+
+            console.log(trimmedPath);
+            return trimmedPath.split("/").pop();
+        }
+
+        // Function to update the title and meta description
+        function updateHeadElements(title, description) {
+            document.title = title; // Update the title
+
+            // Find and update the meta description
+            let metaDescription = document.querySelector('meta[name="description"]');
+            if (metaDescription) {
+                metaDescription.setAttribute('content', description);
+            } else {
+                // Create meta description if it doesn't exist
+                metaDescription = document.createElement('meta');
+                metaDescription.setAttribute('name', 'description');
+                metaDescription.setAttribute('content', description);
+                document.getElementsByTagName('head')[0].appendChild(metaDescription);
+            }
+        }
+
+        // Function to load metadata from JSON
+        function loadContent(artworkNumber) {
+          fetch("../horloge.json")
+            .then((response) => response.json())
+            .then((data) => {
+
+                const encodedData = data[artworkNumber].split(',')[1]; // Assuming the format is "string: data:application/json;base64,..."
+                const decodedJson = atob(encodedData);
+                const artworkInfo = JSON.parse(decodedJson);
+
+                // Update the title and meta description
+                updateHeadElements(artworkInfo.name, artworkInfo.description);
+
+                // Set the image and description
+                document.getElementById('artworkImage').src = artworkInfo.image;
+                
+                document.getElementById('artworkTitle').innerText = artworkInfo.name;
+
+                const description = artworkInfo.description.split('This clock was')[1];
+                const blockNumber = description.split('#')[1];
+                const descriptionElement = document.getElementById('artworkDescription');
+                const link = document.createElement('a');
+                        link.href = `https://optimistic.etherscan.io/block/${blockNumber}`; // Adjust the href according to your URL structure
+                        link.textContent = `${description}`;
+                        descriptionElement.appendChild(link);
+
+
+                 // Populate navigation with links to other artworks
+                populateNavigation(artworkNumber, Object.keys(data));
+            })
+            .catch((error) => console.error("Error:", error));
+        }
+
+         // Function to populate navigation with links
+         function populateNavigation(currentArtworkNumber, allArtworkNumbers) {
+                const navElement = document.getElementById('links');
+
+                // Determine the base URL
+                let baseURL = window.location.href;
+                baseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL; 
+                baseURL = baseURL.substring(0, baseURL.lastIndexOf('/') + 1); 
+
+                allArtworkNumbers.forEach(number => {
+                    if (number !== currentArtworkNumber) {
+                        const link = document.createElement('a');
+                        link.href = baseURL + number;
+                        link.textContent = `[ ${number} ]`;
+                        navElement.appendChild(link);
+                    }
+                });
+            }
+
+            // Function to toggle visibility
+            function toggleVisibility() {
+                var elements = ['artworkTitle', 'artworkDescription', 'openseaLink', 'bonjour'];
+                elements.forEach(function(id) {
+                    var element = document.getElementById(id);
+                    if (element) {
+                        element.style.display = element.style.display === 'none' ? '' : 'none';
+                    }
+                });
+            }
+
+          
+        const artworkNumber = getArtworkNumber();
+        // OpenSea link
+        document.getElementById("openseaLink").href =
+          "https://opensea.io/assets/optimism/0x55dd0cd5ed594bbd47faeebff0665bc241a53157/" +
+          artworkNumber;
+
+
+        loadContent(artworkNumber);
+      };
+    </script>
+  </head>
+  <body>
+    <div id="bonjour" class="container">
+
+        <nav id="links"></nav>
+        <h1><a href="https://vncnt.xyz/horloge">Horloge</a></h1>
+        
+    </div>
+    <main>
+    <img id="artworkImage" src="" alt="SVG Animations made of a grid of rectangle elements with shifting colours and border radius" />
+</main>
+    
+    <div id="openseaContainer">
+      <a id="openseaLink">
+        OpenSea
+    </a>
+    </div>
+    <div id="artworkTitle">
+      </div>
+      <div id="artworkDescription">
+      </div>
+  </body>
+</html>
