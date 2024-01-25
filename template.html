@@ -3,6 +3,9 @@
   <head>
     <title>Horloge</title>
     <meta name="description" content="EVM-made SVG animations">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:title" content="Horloge">
+    <meta property="og:description" content="EVM-made SVG animations">
     <style>
         body, * {
             font-family: sans-serif;
@@ -23,25 +26,52 @@
       .container {
         top: 0;
         left: 0;
-      };
-        nav {
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: flex-start; 
+        flex-wrap: wrap;
+        position: relative;
+      }
+      nav {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         flex-direction: column;
         max-height:90vh;
+        margin-top: 0.75rem;
       }
-      @media (max-width: 1200px) {
-        nav {
-            flex-direction: row;
-        }
-    }
       nav a {
+        display: inline-block;
         padding: 0.15rem;
         margin-right: 1rem;
         white-space: nowrap;
+        flex-grow: 0; 
+        flex-basis: auto;
       } 
+      @media (max-width: 1240px) {
+        .container {
+          flex-direction: column;
+        }
+        nav {
+            flex-direction: row;
+        }
+        nav a {
+            padding: 0.25rem;
+            margin: 0;
+        }
+      }
+      @media (max-width: 720px) {
+        nav a {
+            padding: 0.5rem;
+        }
+      }
+
+
       h1 {
-        margin-top: 0.75rem;
+        margin-top: 0;
+        white-space: nowrap;
+        flex-grow: 0;
+        flex-shrink: 0;
       }
       img {
         width: 89vw;
@@ -64,19 +94,34 @@
         font-style: italic;
         font-weight: bold;
     }
-    @media (max-width: 840px) {
+    #artworkDescription {
+        bottom: 0;
+        right: 0;
+    }
+    @media (max-width: 1240px) {
         #artworkTitle {
             bottom: 1.5rem;
             top: auto; 
         }
         h1 {
             transform: rotate(180deg);
+            width: 95vw;
+            margin-top: 0.75rem;
         }
     }
-    #artworkDescription {
-        bottom: 0;
-        right: 0;
+    @media (max-width: 300px) {
+      #artworkTitle {
+          bottom: 3.5rem;
+      }
+      #artworkDescription {
+          bottom: 1.5rem;
+      }
+      #openseaContainer {
+          right: 0;
+          left: auto;
+      }
     }
+
 
     a {
     color: #FEFEFE;
@@ -132,12 +177,11 @@
 
         // Function to load metadata from JSON
         function loadContent(artworkNumber) {
-          fetch("../horloge.json")
+          fetch(`data.json`)
             .then((response) => response.json())
             .then((data) => {
 
-                const encodedData = data[artworkNumber].split(',')[1]; // Assuming the format is "string: data:application/json;base64,..."
-                const decodedJson = atob(encodedData);
+                const decodedJson = atob(data[artworkNumber]);
                 const artworkInfo = JSON.parse(decodedJson);
 
                 // Update the title and meta description
@@ -156,15 +200,17 @@
                         link.textContent = `${description}`;
                         descriptionElement.appendChild(link);
 
+                // Retrieve the total number of artworks
+                const totalArtworks = artworkInfo.total_artworks;
 
-                 // Populate navigation with links to other artworks
-                populateNavigation(artworkNumber, Object.keys(data));
+                // Populate navigation with links to other artworks
+                populateNavigation(artworkNumber, totalArtworks);
             })
             .catch((error) => console.error("Error:", error));
         }
 
          // Function to populate navigation with links
-         function populateNavigation(currentArtworkNumber, allArtworkNumbers) {
+         function populateNavigation(currentArtworkNumber, totalArtworks) {
                 const navElement = document.getElementById('links');
 
                 // Determine the base URL
@@ -172,14 +218,16 @@
                 baseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL; 
                 baseURL = baseURL.substring(0, baseURL.lastIndexOf('/') + 1); 
 
-                allArtworkNumbers.forEach(number => {
-                    if (number !== currentArtworkNumber) {
-                        const link = document.createElement('a');
-                        link.href = baseURL + number;
-                        link.textContent = `[ ${number} ]`;
-                        navElement.appendChild(link);
-                    }
-                });
+                // Loop through the total number of artworks to create navigation links
+                for (let i = 1; i <= totalArtworks; i++) {
+                    // Skip the current artwork
+                    if (i.toString() === currentArtworkNumber) continue;
+
+                    const link = document.createElement('a');
+                    link.href = `../${i}`; // Adjust the href according to your URL structure
+                    link.textContent = `[ ${i} ]`;
+                    navElement.appendChild(link);
+                }
             }
 
             // Function to toggle visibility
